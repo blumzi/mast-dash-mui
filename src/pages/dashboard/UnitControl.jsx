@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, ButtonGroup, List, ListItem, ListItemText, Pagination, Stack, Divider } from '@mui/material';
 import { Grid, TextField } from '@mui/material';
 import axios from 'axios';
-import config from '../../config';
+import { Config } from '../../config';
 import Checkbox from '@mui/material/Checkbox';
 import FormGroup from '@mui/material/FormGroup';
 import FormControl from '@mui/material/FormControl';
@@ -18,6 +18,9 @@ const IntEnum = {
 };
 
 const UnitControl = () => {
+  const cfg = new Config();
+  const sites = cfg.sites();
+
   const unitStatus = {
     deployed: false,
     status: {}
@@ -31,8 +34,8 @@ const UnitControl = () => {
     whyNotOperational: ['Because it', 'does not', 'exist yet'],
     activities: 0
   };
-  const [allSites, setAllSites] = useState([config.sites['wis'], config.sites['ns']]);
-  const [selectedSite, setSelectedSite] = useState(config.sites['wis']);
+  const [allSites, setAllSites] = useState(Object.keys(sites));
+  const [selectedSite, setSelectedSite] = useState(sites['wis']);
   const [allUnits, setAllUnits] = useState([...selectedSite.deployed, ...selectedSite.planned]);
   const [selectedUnit, setSelectedUnit] = useState(allUnits[0]);
   const [statuses, setStatuses] = useState(unitStatus);
