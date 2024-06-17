@@ -34,9 +34,9 @@ const safety = {
     },
     {
       id: 'safety-graphs',
-      title: 'Graphs',
+      title: 'Weather graphs',
       type: 'item',
-      url: '/safety-graphs',
+      url: 'http://10.23.1.25:3000/d/dk8DxsWVz/neot-smadar-weather?orgId=1&refresh=10s',
       icon: icons.BgColorsOutlined
     }
     // {
