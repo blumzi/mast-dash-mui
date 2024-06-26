@@ -7,6 +7,7 @@ import {
   FontSizeOutlined,
   LoadingOutlined
 } from '@ant-design/icons';
+import WeatherGraphs from '../components/WeatherGraphs';
 
 // icons
 const icons = {
@@ -33,11 +34,11 @@ const safety = {
       icon: icons.FontSizeOutlined
     },
     {
-      id: 'safety-graphs',
-      title: 'Weather graphs',
+      id: 'weather-graphs',
+      title: 'Graphs',
       type: 'item',
-      url: 'http://10.23.1.25:3000/d/dk8DxsWVz/neot-smadar-weather?orgId=1&refresh=10s',
-      icon: icons.BgColorsOutlined
+      url: '/weather',
+      icon: icons.FontSizeOutlined
     }
     // {
     //   id: 'util-shadow',

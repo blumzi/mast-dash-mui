@@ -6,7 +6,7 @@ import safety from './safety';
 import tasks from './tasks';
 import utilities from './utilities';
 // import support from './support';
-// import UnitControl from 'pages/dashboard/UnitControl';
+// import UnitSelector from 'pages/dashboard/UnitSelector';
 
 // ==============================|| MENU ITEMS ||============================== //
 

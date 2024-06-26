@@ -1,4 +1,4 @@
-import axios from 'axios';
+// import axios from 'axios';
 
 export class Config {
   constructor() {
@@ -8,11 +8,16 @@ export class Config {
   async sites() {
     let data = null;
     try {
-      const response = await axios.get(this.base_url + '/sites_conf');
-      data = response.data;
-      console.log('Data fetched successfully:', data);
+      const url = this.base_url + '/sites_conf';
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      data = response.json();
+      console.log('Config.sites(): url: ', url, ', response: ', response);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Config.sites(): url: ', url, ', Error fetching data:', error);
     }
     return data;
   }

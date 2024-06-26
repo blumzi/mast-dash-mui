@@ -3,7 +3,9 @@ import { lazy } from 'react';
 // project import
 import Loadable from 'components/Loadable';
 import Dashboard from 'layout/Dashboard';
-import UnitControl from "../pages/dashboard/UnitControl";
+import UnitSelector from '../pages/dashboard/UnitSelector';
+import SelectorComponent from '../components/SelectorComponent';
+import WeatherGraphs from '../components/WeatherGraphs';
 
 const Color = Loadable(lazy(() => import('pages/component-overview/color')));
 const Typography = Loadable(lazy(() => import('pages/component-overview/typography')));
@@ -50,7 +52,11 @@ const MainRoutes = {
     },
     {
       path: 'units',
-      element: <UnitControl />
+      element: <SelectorComponent />
+    },
+    {
+      path: 'weather',
+      element: <WeatherGraphs />
     }
   ]
 };
