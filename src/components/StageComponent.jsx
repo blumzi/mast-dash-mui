@@ -7,17 +7,19 @@ import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
+import SitesContext from 'contexts/SitesContext';
 
 class StageComponent extends MastComponent {
+  static contextType = SitesContext;
   constructor(props) {
     super(props);
     this.state = {
-      ra: '',
-      dec: '',
-      seconds: '',
-      selectedUnitName: props.selectedUnitName,
-      selectedSite: props.selectedSite,
-      allSites: props.allSites,
+      // ra: '',
+      // dec: '',
+      // seconds: '',
+      // selectedUnitName: props.selectedUnitName,
+      // selectedSite: props.selectedSite,
+      // allSites: props.allSites,
       status: null
     };
     this.fetchStageStatus();
@@ -31,32 +33,17 @@ class StageComponent extends MastComponent {
     clearInterval(this.interval);
   }
   fetchStageStatus() {
-    if (!this.state) {
+    if (!this.context) {
       return;
     }
-    const unit = this.state.selectedUnitName;
+    const { selectedUnitName } = this.state.selectedUnitName;
 
-    unitApi(unit, 'stage/status').then((stageStatus) => {
+    unitApi(selectedUnitName, 'stage/status').then((stageStatus) => {
       this.setState(() => ({
         status: stageStatus
       }));
     });
   }
-  isDeployed(unit_name) {
-    return this.state.selectedSite.deployed.includes(unit_name);
-  }
-  handleRaChange = (event) => {
-    this.setState({ ra: event.target.value });
-  };
-  handleDecChange = (event) => {
-    this.setState({ dec: event.target.value });
-  };
-
-  handleMoveToCoordinates = () => {
-    const raNumeric = parseCoordinates(this.state.ra);
-    const decNumeric = parseCoordinates(this.state.dec);
-    void unitApi(this.state.selectedUnitName, 'move_to_coordinates', { ra: raNumeric, dec: decNumeric });
-  };
 
   handleAbort = () => {
     void unitApi(this.state.selectedUnitName, 'mount/abort');
@@ -66,18 +53,17 @@ class StageComponent extends MastComponent {
   }
 
   controls() {
-    const unit = this.state.selectedUnitName;
-    const ra = this.state.ra;
-    const dec = this.state.dec;
+    const selectedUnitName = this.context.selectedUnitName;
+    const isDeployed = this.context.isDeployed(selectedUnitName);
 
     return (
       <>
-        <FormGroup disabled={this.isDeployed(unit)}>
+        <FormGroup disabled={!isDeployed}>
           <FormGroup row>
             <Button
               variant="text"
               size="small"
-              onClick={() => unitApi(unit, 'mount/startup')}
+              onClick={() => unitApi(unit, 'stage/startup')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
               Startup
@@ -85,60 +71,11 @@ class StageComponent extends MastComponent {
             <Button
               variant="text"
               size="small"
-              onClick={() => unitApi(unit, 'mount/shutdown')}
+              onClick={() => unitApi(unit, 'stage/shutdown')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
               Shutdown
             </Button>
-          </FormGroup>
-          <FormGroup row>
-            <Button
-              variant="text"
-              size="small"
-              onClick={() => unitApi(unit, 'mount/start_tracking')}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Start tracking
-            </Button>
-            <Button
-              variant="text"
-              size="small"
-              onClick={() => unitApi(unit, 'mount/stop_tracking')}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Stop tracking
-            </Button>
-          </FormGroup>
-          <FormGroup row>
-            <Button
-              variant="text"
-              size="small"
-              onClick={() => unitApi(unit, 'mount/park')}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Park
-            </Button>
-            <Button
-              variant="text"
-              size="small"
-              onClick={() => unitApi(unit, 'mount/find_home')}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Find home
-            </Button>
-          </FormGroup>
-          <FormGroup row>
-            <Button
-              variant="text"
-              size="small"
-              onClick={this.handleMoveToCoordinates}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Go to
-            </Button>
-            <TextField label={'RA'} variant={'standard'} onChange={this.handleRaChange} value={ra} />
-            &nbsp; &nbsp; &nbsp;
-            <TextField label={'Dec'} variant={'standard'} onChange={this.handleDecChange} value={dec} />
           </FormGroup>
           <FormGroup row>
             <Button variant="text" size="small" onClick={this.handleAbort} sx={{ justifyContent: 'flex-start', width: '100px' }}>
@@ -150,9 +87,6 @@ class StageComponent extends MastComponent {
     );
   }
   summary() {
-    if (!this.state.status) {
-      return;
-    }
     const status = this.state.status;
     let activities = status.activities_verbal.replace('<StageActivities.', '').replace(/:.*/, '');
     if (activities === '0') {

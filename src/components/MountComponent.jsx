@@ -7,16 +7,18 @@ import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
+import SitesContext from 'contexts/SitesContext';
 
 class MountComponent extends MastComponent {
+  static contextType = SitesContext;
   constructor(props) {
     super(props);
     this.state = {
       ra: '',
       dec: '',
-      selectedUnitName: props.selectedUnitName,
-      selectedSite: props.selectedSite,
-      allSites: props.allSites,
+      // selectedUnitName: props.selectedUnitName,
+      // selectedSite: props.selectedSite,
+      // allSites: props.allSites,
       status: null
     };
     this.fetchMountStatus();
@@ -30,19 +32,16 @@ class MountComponent extends MastComponent {
     clearInterval(this.interval);
   }
   fetchMountStatus() {
-    if (!this.state) {
+    if (!this.context) {
       return;
     }
-    const unit = this.state.selectedUnitName;
+    const { selectedUnitName } = this.context;
 
-    unitApi(unit, 'mount/status').then((mountStatus) => {
+    unitApi(selectedUnitName, 'mount/status').then((mountStatus) => {
       this.setState(() => ({
         status: mountStatus
       }));
     });
-  }
-  isDeployed(unit_name) {
-    return this.state.selectedSite.deployed.includes(unit_name);
   }
   handleRaChange = (event) => {
     this.setState({ ra: event.target.value });
@@ -65,13 +64,14 @@ class MountComponent extends MastComponent {
   }
 
   controls() {
-    const unit = this.state.selectedUnitName;
+    const unit = this.context.selectedUnitName;
     const ra = this.state.ra;
     const dec = this.state.dec;
+    const isDeployed = this.context.isDeployed(unit);
 
     return (
       <>
-        <FormGroup disabled={this.isDeployed(unit)}>
+        <FormGroup disabled={!isDeployed}>
           <FormGroup row>
             <Button
               variant="text"

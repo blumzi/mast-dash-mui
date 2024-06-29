@@ -1,23 +1,24 @@
 import MastComponent from './MastComponent';
-import { Button, FormLabel, TextField } from '@mui/material';
+import { Button, FormLabel } from '@mui/material';
 import React from 'react';
-import { parseCoordinates } from './Utils';
 import { unitApi } from './Api';
 import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
+import SitesContext from 'contexts/SitesContext';
 
 class CoversComponent extends MastComponent {
+  static contextType = SitesContext;
   constructor(props) {
     super(props);
     this.state = {
       ra: '',
       dec: '',
       seconds: '',
-      selectedUnitName: props.selectedUnitName,
-      selectedSite: props.selectedSite,
-      allSites: props.allSites,
+      // selectedUnitName: props.selectedUnitName,
+      // selectedSite: props.selectedSite,
+      // allSites: props.allSites,
       status: null
     };
     this.fetchCoversStatus();
@@ -31,53 +32,37 @@ class CoversComponent extends MastComponent {
     clearInterval(this.interval);
   }
   fetchCoversStatus() {
-    if (!this.state) {
+    if (!this.context) {
       return;
     }
-    const unit = this.state.selectedUnitName;
+    const selectedUnitName = this.context.selectedUnitName;
 
-    unitApi(unit, 'covers/status').then((coversStatus) => {
+    unitApi(selectedUnitName, 'covers/status').then((coversStatus) => {
       this.setState(() => ({
         status: coversStatus
       }));
     });
   }
-  isDeployed(unit_name) {
-    return this.state.selectedSite.deployed.includes(unit_name);
-  }
-  handleRaChange = (event) => {
-    this.setState({ ra: event.target.value });
-  };
-  handleDecChange = (event) => {
-    this.setState({ dec: event.target.value });
-  };
-
-  handleMoveToCoordinates = () => {
-    const raNumeric = parseCoordinates(this.state.ra);
-    const decNumeric = parseCoordinates(this.state.dec);
-    void unitApi(this.state.selectedUnitName, 'move_to_coordinates', { ra: raNumeric, dec: decNumeric });
-  };
 
   handleAbort = () => {
-    void unitApi(this.state.selectedUnitName, 'mount/abort');
+    void unitApi(this.state.selectedUnitName, 'covers/abort');
   };
   configs() {
-    return <>Nothing yet</>;
+    return <h6>Nothing yet</h6>;
   }
 
   controls() {
-    const unit = this.state.selectedUnitName;
-    const ra = this.state.ra;
-    const dec = this.state.dec;
+    const { selectedUnitName } = this.context.selectedUnitName;
+    const isDeployed = this.context.isDeployed(selectedUnitName);
 
     return (
       <>
-        <FormGroup disabled={this.isDeployed(unit)}>
+        <FormGroup disabled={!isDeployed}>
           <FormGroup row>
             <Button
               variant="text"
               size="small"
-              onClick={() => unitApi(unit, 'mount/startup')}
+              onClick={() => unitApi(unit, 'covers/startup')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
               Startup
@@ -85,7 +70,7 @@ class CoversComponent extends MastComponent {
             <Button
               variant="text"
               size="small"
-              onClick={() => unitApi(unit, 'mount/shutdown')}
+              onClick={() => unitApi(unit, 'covers/shutdown')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
               Shutdown
@@ -95,50 +80,19 @@ class CoversComponent extends MastComponent {
             <Button
               variant="text"
               size="small"
-              onClick={() => unitApi(unit, 'mount/start_tracking')}
+              onClick={() => unitApi(unit, 'covers/open')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
-              Start tracking
+              Open
             </Button>
             <Button
               variant="text"
               size="small"
-              onClick={() => unitApi(unit, 'mount/stop_tracking')}
+              onClick={() => unitApi(unit, 'covers/close')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
-              Stop tracking
+              Close
             </Button>
-          </FormGroup>
-          <FormGroup row>
-            <Button
-              variant="text"
-              size="small"
-              onClick={() => unitApi(unit, 'mount/park')}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Park
-            </Button>
-            <Button
-              variant="text"
-              size="small"
-              onClick={() => unitApi(unit, 'mount/find_home')}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Find home
-            </Button>
-          </FormGroup>
-          <FormGroup row>
-            <Button
-              variant="text"
-              size="small"
-              onClick={this.handleMoveToCoordinates}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Go to
-            </Button>
-            <TextField label={'RA'} variant={'standard'} onChange={this.handleRaChange} value={ra} />
-            &nbsp; &nbsp; &nbsp;
-            <TextField label={'Dec'} variant={'standard'} onChange={this.handleDecChange} value={dec} />
           </FormGroup>
           <FormGroup row>
             <Button variant="text" size="small" onClick={this.handleAbort} sx={{ justifyContent: 'flex-start', width: '100px' }}>
@@ -150,9 +104,6 @@ class CoversComponent extends MastComponent {
     );
   }
   summary() {
-    if (!this.state.status) {
-      return;
-    }
     const status = this.state.status;
     let activities = status.activities_verbal.replace('<CoversActivities.', '').replace(/:.*/, '');
     if (activities === '0') {

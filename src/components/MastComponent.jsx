@@ -42,13 +42,13 @@ class MastComponent extends React.Component {
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>{summary}</AccordionSummary>
         <AccordionDetails>
           {controls && (
-            <Box component="fieldset">
+            <Box component="fieldset" borderRadius={2}>
               <legend>Controls</legend>
               {controls}
             </Box>
           )}
           {configs && (
-            <Box component="fieldset">
+            <Box component="fieldset" borderRadius={2}>
               <legend>Configuration</legend>
               {configs}
             </Box>

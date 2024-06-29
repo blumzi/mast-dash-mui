@@ -7,17 +7,19 @@ import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
+import SitesContext from 'contexts/SitesContext';
 
 class FocuserComponent extends MastComponent {
+  static contextType = SitesContext;
   constructor(props) {
     super(props);
     this.state = {
-      ra: '',
-      dec: '',
-      seconds: '',
-      selectedUnitName: props.selectedUnitName,
-      selectedSite: props.selectedSite,
-      allSites: props.allSites,
+      // ra: '',
+      // dec: '',
+      // seconds: '',
+      // selectedUnitName: props.selectedUnitName,
+      // selectedSite: props.selectedSite,
+      // allSites: props.allSites,
       status: null
     };
     this.fetchFocuserStatus();
@@ -31,53 +33,39 @@ class FocuserComponent extends MastComponent {
     clearInterval(this.interval);
   }
   fetchFocuserStatus() {
-    if (!this.state) {
+    if (!this.context) {
       return;
     }
-    const unit = this.state.selectedUnitName;
+    const { selectedUnitName } = this.context.selectedUnitName;
 
-    unitApi(unit, 'focuser/status').then((coversStatus) => {
+    unitApi(selectedUnitName, 'focuser/status').then((coversStatus) => {
       this.setState(() => ({
         status: coversStatus
       }));
     });
   }
-  isDeployed(unit_name) {
-    return this.state.selectedSite.deployed.includes(unit_name);
-  }
-  handleRaChange = (event) => {
-    this.setState({ ra: event.target.value });
-  };
-  handleDecChange = (event) => {
-    this.setState({ dec: event.target.value });
-  };
-
-  handleMoveToCoordinates = () => {
-    const raNumeric = parseCoordinates(this.state.ra);
-    const decNumeric = parseCoordinates(this.state.dec);
-    void unitApi(this.state.selectedUnitName, 'move_to_coordinates', { ra: raNumeric, dec: decNumeric });
-  };
 
   handleAbort = () => {
-    void unitApi(this.state.selectedUnitName, 'mount/abort');
+    void unitApi(this.state.selectedUnitName, 'focuser/abort');
   };
   configs() {
     return <>Nothing yet</>;
   }
 
   controls() {
-    const unit = this.state.selectedUnitName;
+    const { selectedUnitName } = this.state.selectedUnitName;
     const ra = this.state.ra;
     const dec = this.state.dec;
+    const isDeployed = this.context.isDeployed(selectedUnitName);
 
     return (
       <>
-        <FormGroup disabled={this.isDeployed(unit)}>
+        <FormGroup disabled={!isDeployed}>
           <FormGroup row>
             <Button
               variant="text"
               size="small"
-              onClick={() => unitApi(unit, 'mount/startup')}
+              onClick={() => unitApi(unit, 'focuser/startup')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
               Startup
@@ -85,7 +73,7 @@ class FocuserComponent extends MastComponent {
             <Button
               variant="text"
               size="small"
-              onClick={() => unitApi(unit, 'mount/shutdown')}
+              onClick={() => unitApi(unit, 'focuser/shutdown')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
               Shutdown
@@ -95,25 +83,7 @@ class FocuserComponent extends MastComponent {
             <Button
               variant="text"
               size="small"
-              onClick={() => unitApi(unit, 'mount/start_tracking')}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Start tracking
-            </Button>
-            <Button
-              variant="text"
-              size="small"
-              onClick={() => unitApi(unit, 'mount/stop_tracking')}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Stop tracking
-            </Button>
-          </FormGroup>
-          <FormGroup row>
-            <Button
-              variant="text"
-              size="small"
-              onClick={() => unitApi(unit, 'mount/park')}
+              onClick={() => unitApi(unit, 'focuser/park')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
               Park
@@ -121,24 +91,11 @@ class FocuserComponent extends MastComponent {
             <Button
               variant="text"
               size="small"
-              onClick={() => unitApi(unit, 'mount/find_home')}
+              onClick={() => unitApi(unit, 'focuser/find_home')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
               Find home
             </Button>
-          </FormGroup>
-          <FormGroup row>
-            <Button
-              variant="text"
-              size="small"
-              onClick={this.handleMoveToCoordinates}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Go to
-            </Button>
-            <TextField label={'RA'} variant={'standard'} onChange={this.handleRaChange} value={ra} />
-            &nbsp; &nbsp; &nbsp;
-            <TextField label={'Dec'} variant={'standard'} onChange={this.handleDecChange} value={dec} />
           </FormGroup>
           <FormGroup row>
             <Button variant="text" size="small" onClick={this.handleAbort} sx={{ justifyContent: 'flex-start', width: '100px' }}>
@@ -150,9 +107,6 @@ class FocuserComponent extends MastComponent {
     );
   }
   summary() {
-    if (!this.state.status) {
-      return;
-    }
     const status = this.state.status;
     let activities = status.activities_verbal.replace('<CoversActivities.', '').replace(/:.*/, '');
     if (activities === '0') {

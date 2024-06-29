@@ -1,21 +1,22 @@
 import MastComponent from './MastComponent';
-import { Button, FormLabel, TextField } from '@mui/material';
+import { Button, FormLabel } from '@mui/material';
 import React from 'react';
-import { parseCoordinates } from './Utils';
 import { unitApi } from './Api';
 import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
+import SitesContext from 'contexts/SitesContext';
 
 class CameraComponent extends MastComponent {
+  static contextType = SitesContext;
   constructor(props) {
     super(props);
     this.state = {
       seconds: '',
-      selectedUnitName: props.selectedUnitName,
-      selectedSite: props.selectedSite,
-      allSites: props.allSites,
+      // selectedUnitName: props.selectedUnitName,
+      // selectedSite: props.selectedSite,
+      // allSites: props.allSites,
       status: null
     };
     this.fetchCameraStatus();
@@ -29,32 +30,17 @@ class CameraComponent extends MastComponent {
     clearInterval(this.interval);
   }
   fetchCameraStatus() {
-    if (!this.state) {
+    if (!this.context) {
       return;
     }
-    const unit = this.state.selectedUnitName;
+    const { selectedUnitName } = this.context.selectedUnitName;
 
-    unitApi(unit, 'camera/status').then((coversStatus) => {
+    unitApi(selectedUnitName, 'camera/status').then((cameraStatus) => {
       this.setState(() => ({
-        status: coversStatus
+        status: cameraStatus
       }));
     });
   }
-  isDeployed(unit_name) {
-    return this.state.selectedSite.deployed.includes(unit_name);
-  }
-  handleRaChange = (event) => {
-    this.setState({ ra: event.target.value });
-  };
-  handleDecChange = (event) => {
-    this.setState({ dec: event.target.value });
-  };
-
-  handleMoveToCoordinates = () => {
-    const raNumeric = parseCoordinates(this.state.ra);
-    const decNumeric = parseCoordinates(this.state.dec);
-    void unitApi(this.state.selectedUnitName, 'move_to_coordinates', { ra: raNumeric, dec: decNumeric });
-  };
 
   handleAbort = () => {
     void unitApi(this.state.selectedUnitName, 'mount/abort');
@@ -64,18 +50,21 @@ class CameraComponent extends MastComponent {
   }
 
   controls() {
-    const unit = this.state.selectedUnitName;
-    const ra = this.state.ra;
-    const dec = this.state.dec;
+    if (!this.context) {
+      return;
+    }
+    const selectedUnitName = this.context.selectedUnitName;
+    const seconds = this.state.seconds;
+    const isDeployed = this.context.isDeployed(selectedUnitName);
 
     return (
       <>
-        <FormGroup disabled={this.isDeployed(unit)}>
+        <FormGroup disabled={!isDeployed}>
           <FormGroup row>
             <Button
               variant="text"
               size="small"
-              onClick={() => unitApi(unit, 'mount/startup')}
+              onClick={() => unitApi(unit, 'camera/startup')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
               Startup
@@ -83,60 +72,11 @@ class CameraComponent extends MastComponent {
             <Button
               variant="text"
               size="small"
-              onClick={() => unitApi(unit, 'mount/shutdown')}
+              onClick={() => unitApi(unit, 'camera/shutdown')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
               Shutdown
             </Button>
-          </FormGroup>
-          <FormGroup row>
-            <Button
-              variant="text"
-              size="small"
-              onClick={() => unitApi(unit, 'mount/start_tracking')}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Start tracking
-            </Button>
-            <Button
-              variant="text"
-              size="small"
-              onClick={() => unitApi(unit, 'mount/stop_tracking')}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Stop tracking
-            </Button>
-          </FormGroup>
-          <FormGroup row>
-            <Button
-              variant="text"
-              size="small"
-              onClick={() => unitApi(unit, 'mount/park')}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Park
-            </Button>
-            <Button
-              variant="text"
-              size="small"
-              onClick={() => unitApi(unit, 'mount/find_home')}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Find home
-            </Button>
-          </FormGroup>
-          <FormGroup row>
-            <Button
-              variant="text"
-              size="small"
-              onClick={this.handleMoveToCoordinates}
-              sx={{ justifyContent: 'flex-start', width: '100px' }}
-            >
-              Go to
-            </Button>
-            <TextField label={'RA'} variant={'standard'} onChange={this.handleRaChange} value={ra} />
-            &nbsp; &nbsp; &nbsp;
-            <TextField label={'Dec'} variant={'standard'} onChange={this.handleDecChange} value={dec} />
           </FormGroup>
           <FormGroup row>
             <Button variant="text" size="small" onClick={this.handleAbort} sx={{ justifyContent: 'flex-start', width: '100px' }}>
@@ -148,9 +88,6 @@ class CameraComponent extends MastComponent {
     );
   }
   summary() {
-    if (!this.state.status) {
-      return;
-    }
     const status = this.state.status;
     let activities = status.activities_verbal.replace('<CoversActivities.', '').replace(/:.*/, '');
     if (activities === '0') {

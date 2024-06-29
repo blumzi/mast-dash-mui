@@ -1,13 +1,10 @@
 import React from 'react';
-import { Box, Typography, Stack, Divider } from '@mui/material';
-import Checkbox from '@mui/material/Checkbox';
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
+import { Box, Typography, Divider } from '@mui/material';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import UnitComponent from '../../components/UnitComponent';
 import { unitApi } from '../../components/Api';
 import * as PropTypes from 'prop-types';
+import SitesContext from '../../contexts/SitesContext';
 
 const IntEnum = {
   0: 'Idle',
@@ -16,13 +13,14 @@ const IntEnum = {
 };
 
 export class UnitSelector extends React.Component {
+  static contextType = SitesContext;
   constructor(props) {
     super(props);
     this.state = {
-      selectedSite: props.selectedSite,
-      selectedUnitName: props.selectedUnitName,
-      allSites: props.allSites,
-      allUnitNames: props.allUnitNames,
+      // selectedSite: props.selectedSite,
+      // selectedUnitName: props.selectedUnitName,
+      // allSites: props.allSites,
+      // allUnitNames: props.allUnitNames,
       statuses: []
     };
   }
@@ -45,7 +43,7 @@ export class UnitSelector extends React.Component {
   //     });
   // }
   handleSiteChange = (event, newValue) => {
-    this.setState({ selectedSite: newValue });
+    this.context.selectedSite({ selectedSite: newValue });
   };
 
   handleUnitChange = (event, newValue) => {

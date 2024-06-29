@@ -1,25 +1,25 @@
 import MastComponent from './MastComponent';
-import { Button, Divider, FormLabel, Grid, TextField } from '@mui/material';
+import { Button, FormLabel, TextField } from '@mui/material';
 import React from 'react';
 import { parseCoordinates } from './Utils';
 import { controlApi, unitApi } from './Api';
-import Stack from '@mui/material/Stack';
 import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import Box from '@mui/material/Box';
 import FormGroup from '@mui/material/FormGroup';
+import SitesContext from 'contexts/SitesContext';
 
 class UnitComponent extends MastComponent {
+  static contextType = SitesContext;
   constructor(props) {
     super(props);
     this.state = {
       ra: '',
       dec: '',
       seconds: '',
-      selectedUnitName: props.selectedUnitName,
-      selectedSite: props.selectedSite,
-      allSites: props.allSites,
+      // selectedUnitName: props.selectedUnitName,
+      // selectedSite: props.selectedSite,
+      // allSites: props.allSites,
       statuses: {}
     };
     this.fetchUnitStatus();
@@ -33,13 +33,13 @@ class UnitComponent extends MastComponent {
     clearInterval(this.interval);
   }
   fetchUnitStatus() {
-    if (!this.state) {
+    if (!this.context) {
       return;
     }
-    const unit = this.state.selectedUnitName;
+    const { selectedUnitName, selectedSite } = this.context.selectedUnitName;
     // console.log(`fetchUnitStatus: site: ${this.state.selectedSite.name}, unit: ${this.state.selectedUnitName}`);
     // first get a mini status from the controller
-    controlApi(this.state.selectedSite.name, `unit/${unit}/minimal_status`).then((mini_status) => {
+    controlApi(selectedSite.name, `unit/${selectedUnitName}/minimal_status`).then((mini_status) => {
       if (mini_status.powered && mini_status.detected) {
         // the unit is accessible, get the full status
         unitApi(unit, 'status').then((full_status) => {
@@ -103,24 +103,17 @@ class UnitComponent extends MastComponent {
     void unitApi(this.state.selectedUnitName, 'expose', { seconds: secondsNumeric });
   };
   configs() {
-    return null;
-    // return (
-    //   <>
-    //     <Box component="fieldset">
-    //       <legend>Configuration</legend>
-    //       Nothing yet
-    //     </Box>
-    //   </>
-    // );
+    return <>Nothing yet</>;
   }
 
   controls() {
     const { seconds } = this.state;
-    const unit = this.state.selectedUnitName;
+    const unit = this.context.selectedUnitName;
+    const isDeployed = this.context.isDeployed(unit);
 
     return (
       <>
-        <FormGroup disabled={this.isDeployed(unit)}>
+        <FormGroup disabled={!isDeployed}>
           <FormGroup row>
             <Button variant="text" onClick={() => unitApi('startup')} sx={{ justifyContent: 'flex-start', width: '120px' }}>
               Startup
@@ -148,10 +141,15 @@ class UnitComponent extends MastComponent {
     );
   }
   summary() {
-    if (!(this.state.selectedUnitName in this.state.statuses)) {
+    const unit = this.context.selectedUnitName;
+    const isDeployed = this.context.isDeployed(unit);
+
+    if (!isDeployed) {
+      return <h6>Unit &apos;{unit}&apos; is not deployed yet!</h6>;
+    }
+    if (!(unit in this.state.statuses)) {
       return <h6>No status for {this.state.selectedUnitName} yet!</h6>;
     }
-    const unit = this.state.selectedUnitName;
     const status = this.state.statuses[unit];
     let activities = status.activities_verbal.replace('<UnitActivities.', '').replace(/:.*/, '');
     if (activities === '0') {
