@@ -51,6 +51,7 @@
     "simplebar-react": "^3.2.4",
     "slick-carousel": "^1.8.1",
     "swr": "^2.2.5",
+    "typescript": "^5.5.3",
     "util": "^0.12.5",
     "vite": "^5.2.10",
     "vite-jsconfig-paths": "^2.0.1",

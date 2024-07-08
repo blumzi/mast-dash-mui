@@ -55,3 +55,7 @@ export function buildSpecUrl(site, method, params = {}) {
   const base = `http://mast-${site}-spec.${WIS_DOMAIN}:8001/mast/api/v1/spec`;
   return `${base}/${makeQuery(method, params)}`;
 }
+
+export function isEmptyObject(obj) {
+  return obj === null || obj === undefined || (Object.keys(obj).length === 0 && obj.constructor === Object);
+}

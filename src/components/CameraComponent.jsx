@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
 import SitesContext from 'contexts/SitesContext';
+import { isEmptyObject } from './Utils';
 
 class CameraComponent extends MastComponent {
   static contextType = SitesContext;
@@ -15,7 +16,7 @@ class CameraComponent extends MastComponent {
     this.state = {
       seconds: '',
       // selectedUnitName: props.selectedUnitName,
-      // selectedSite: props.selectedSite,
+      // selectedSiteName: props.selectedSiteName,
       // allSites: props.allSites,
       status: null
     };
@@ -50,7 +51,7 @@ class CameraComponent extends MastComponent {
   }
 
   controls() {
-    if (!this.context) {
+    if (isEmptyObject(this.context)) {
       return;
     }
     const selectedUnitName = this.context.selectedUnitName;
@@ -88,6 +89,9 @@ class CameraComponent extends MastComponent {
     );
   }
   summary() {
+    if (isEmptyObject(this.status)) {
+      return;
+    }
     const status = this.state.status;
     let activities = status.activities_verbal.replace('<CoversActivities.', '').replace(/:.*/, '');
     if (activities === '0') {

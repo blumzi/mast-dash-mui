@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
 import SitesContext from 'contexts/SitesContext';
+import { isEmptyObject } from './Utils';
 
 class MountComponent extends MastComponent {
   static contextType = SitesContext;
@@ -17,7 +18,7 @@ class MountComponent extends MastComponent {
       ra: '',
       dec: '',
       // selectedUnitName: props.selectedUnitName,
-      // selectedSite: props.selectedSite,
+      // selectedSiteName: props.selectedSiteName,
       // allSites: props.allSites,
       status: null
     };
@@ -64,6 +65,9 @@ class MountComponent extends MastComponent {
   }
 
   controls() {
+    if (isEmptyObject(this.context)) {
+      return;
+    }
     const unit = this.context.selectedUnitName;
     const ra = this.state.ra;
     const dec = this.state.dec;
@@ -149,7 +153,7 @@ class MountComponent extends MastComponent {
     );
   }
   summary() {
-    if (!this.state.status) {
+    if (isEmptyObject(this.state.status)) {
       return;
     }
     const status = this.state.status;

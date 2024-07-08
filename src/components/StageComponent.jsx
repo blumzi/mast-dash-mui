@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
 import SitesContext from 'contexts/SitesContext';
+import { isEmptyObject } from './Utils';
 
 class StageComponent extends MastComponent {
   static contextType = SitesContext;
@@ -18,7 +19,7 @@ class StageComponent extends MastComponent {
       // dec: '',
       // seconds: '',
       // selectedUnitName: props.selectedUnitName,
-      // selectedSite: props.selectedSite,
+      // selectedSiteName: props.selectedSiteName,
       // allSites: props.allSites,
       status: null
     };
@@ -53,6 +54,9 @@ class StageComponent extends MastComponent {
   }
 
   controls() {
+    if (isEmptyObject(this.context)) {
+      return;
+    }
     const selectedUnitName = this.context.selectedUnitName;
     const isDeployed = this.context.isDeployed(selectedUnitName);
 
@@ -87,6 +91,9 @@ class StageComponent extends MastComponent {
     );
   }
   summary() {
+    if (isEmptyObject(this.state.status)) {
+      return;
+    }
     const status = this.state.status;
     let activities = status.activities_verbal.replace('<StageActivities.', '').replace(/:.*/, '');
     if (activities === '0') {

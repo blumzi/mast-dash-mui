@@ -1,13 +1,13 @@
 import MastComponent from './MastComponent';
 import { Button, FormLabel, TextField } from '@mui/material';
 import React from 'react';
-import { parseCoordinates } from './Utils';
 import { unitApi } from './Api';
 import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
 import SitesContext from 'contexts/SitesContext';
+import { isEmptyObject } from './Utils';
 
 class FocuserComponent extends MastComponent {
   static contextType = SitesContext;
@@ -18,7 +18,7 @@ class FocuserComponent extends MastComponent {
       // dec: '',
       // seconds: '',
       // selectedUnitName: props.selectedUnitName,
-      // selectedSite: props.selectedSite,
+      // selectedSiteName: props.selectedSiteName,
       // allSites: props.allSites,
       status: null
     };
@@ -53,9 +53,10 @@ class FocuserComponent extends MastComponent {
   }
 
   controls() {
-    const { selectedUnitName } = this.state.selectedUnitName;
-    const ra = this.state.ra;
-    const dec = this.state.dec;
+    if (isEmptyObject(this.context)) {
+      return;
+    }
+    const { selectedUnitName } = this.context.selectedUnitName;
     const isDeployed = this.context.isDeployed(selectedUnitName);
 
     return (
@@ -107,6 +108,9 @@ class FocuserComponent extends MastComponent {
     );
   }
   summary() {
+    if (isEmptyObject(this.state.status)) {
+      return;
+    }
     const status = this.state.status;
     let activities = status.activities_verbal.replace('<CoversActivities.', '').replace(/:.*/, '');
     if (activities === '0') {
