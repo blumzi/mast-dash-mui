@@ -1,3 +1,6 @@
+import React, { ReactNode } from 'react';
+import { Box, Typography } from '@mui/material';
+
 export const WIS_DOMAIN = 'weizmann.ac.il';
 export const parseCoordinates = (input) => {
   // Check if input contains ":" (indicating sexagesimal format)
@@ -58,4 +61,17 @@ export function buildSpecUrl(site, method, params = {}) {
 
 export function isEmptyObject(obj) {
   return obj === null || obj === undefined || (Object.keys(obj).length === 0 && obj.constructor === Object);
+}
+export function renderMultilineText(lines) {
+  return (
+    <Box sx={{ lineHeight: 'small', textJustify: 'aria-start' }}>
+      <div>
+        {lines.map((line, index) => (
+          <Typography variant="body1" key={index} component={'div'}>
+            {line}
+          </Typography>
+        ))}
+      </div>
+    </Box>
+  );
 }

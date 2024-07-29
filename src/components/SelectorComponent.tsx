@@ -7,20 +7,18 @@ import FocuserComponent from './FocuserComponent';
 import StageComponent from './StageComponent';
 import CameraComponent from './CameraComponent';
 
-class SelectorComponent extends React.Component {
-  render() {
-    return (
-      <div>
-        <UnitSelector />
-        <UnitComponent />
-        {/*<MountComponent />*/}
-        {/*<CoversComponent />*/}
-        {/*<FocuserComponent />*/}
-        {/*<StageComponent />*/}
-        {/*<CameraComponent />*/}
-      </div>
-    );
-  }
+export function SelectorComponent() {
+  return (
+    <>
+      <UnitSelector />
+      <UnitComponent />
+      {/*<MountComponent />*/}
+      {/*<CoversComponent />*/}
+      {/*<FocuserComponent />*/}
+      {/*<StageComponent />*/}
+      {/*<CameraComponent />*/}
+    </>
+  );
 }
 
 export default SelectorComponent;

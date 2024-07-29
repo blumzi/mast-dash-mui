@@ -4,12 +4,10 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import { unitApi } from '../../components/Api';
 import * as PropTypes from 'prop-types';
-import { SiteData, useSitesContext } from '../../contexts/SitesContext';
-import { isEmptyObject } from '../../components/Utils';
+import { useSitesContext, isDeployed } from '../../contexts/SitesContext';
 import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import UnitComponent from '../../components/UnitComponent';
+import { Notification } from '../../components/Notification';
+import { isEmptyObject } from '../../components/Utils';
 
 const IntEnum = {
   0: 'Idle',
@@ -17,62 +15,74 @@ const IntEnum = {
   2: 'Activity 2'
 };
 
-function UnitSelector() {
-  const statuses = [];
-  const [value, setValue] = useState(0);
-
+export function UnitSelector() {
   const sitesContext = useSitesContext();
+  if (!sitesContext) {
+    throw new Error('UnitSelector must be used within a SitesProvider');
+  }
+  if (isEmptyObject(sitesContext)) return;
 
-  function handleSiteChange(event: any, newSite: string) {
-    sitesContext.setSelectedSiteName(newSite);
-    sitesContext.sites.forEach((site) => {
+  const {
+    selectedUnitName: unit,
+    sites,
+    status,
+    selectedSite,
+    setSelectedSiteName,
+    setSelectedSite,
+    setSelectedUnitName,
+    setStatus
+  } = sitesContext;
+
+  function handleSiteChange(event, newSite) {
+    setSelectedSiteName(newSite);
+
+    sites.forEach((site) => {
       if (site.name === newSite) {
         const unitNames = [...site.deployed, ...site.planned];
-        sitesContext.setSelectedUnitName(unitNames[0]);
-        sitesContext.setSelectedSite(site);
+        setSelectedUnitName(unitNames[0]);
+        setSelectedSite(site);
       }
     });
   }
 
   function handleUnitChange(event, newValue: string) {
-    sitesContext.setSelectedUnitName(newValue);
+    setSelectedUnitName(newValue);
   }
 
   function handleUnitClick(unit: string) {
-    sitesContext.setSelectedUnitName(unit);
+    setSelectedUnitName(unit);
     unitApi(unit, 'status').then((status) => {
-      statuses[unit] = status;
+      setStatus((prevStatuses) => ({ ...prevStatuses, [unit]: status }));
     });
   }
 
   function handleSiteClick(siteName: string) {
-    sitesContext.setSelectedSiteName(siteName);
-    sitesContext.sites.forEach((site) => {
+    setSelectedSiteName(siteName);
+    sites.forEach((site) => {
       if (site.name === siteName) {
         const unitNames = [...site.deployed, ...site.planned];
-        sitesContext.setSelectedUnitName(unitNames[0]);
-        sitesContext.setSelectedSite(site);
+        setSelectedUnitName(unitNames[0]);
+        setSelectedSite(site);
       }
     });
     renderUnitsList();
   }
 
   function renderUnitsList() {
-    if (!sitesContext || !sitesContext.sites) {
+    if (!sitesContext || isEmptyObject(sitesContext.sites)) {
       return null;
     }
-    const sites = sitesContext.sites;
+
     if (!sites) {
       return;
     }
-    const selectedSite = sitesContext.selectedSite;
-    const units = [...selectedSite.deployed, ...selectedSite.planned];
-    const selectedUnit = units[0];
+
+    const units: any[] = [...selectedSite.deployed, ...selectedSite.planned];
 
     return (
       <Box sx={{ width: '100%' }}>
         <Typography variant="h5">Sites</Typography>
-        <Tabs onChange={handleSiteChange} value={selectedSite.location}>
+        <Tabs sx={{ '& button': { borderRadius: 2 } }} onChange={handleSiteChange} value={selectedSite.location}>
           {sites.map((site, index) => (
             <Tab
               key={site.name}
@@ -85,16 +95,15 @@ function UnitSelector() {
         </Tabs>
         <br />
         <Typography variant="h5">Units at {selectedSite.location}</Typography>
-        <Tabs onChange={handleUnitChange} value={selectedUnit} variant="scrollable" scrollButtons="auto">
+        <Tabs onChange={handleUnitChange} value={unit} variant="scrollable" scrollButtons="auto">
           {units.map((unitName, index) => (
             <Tab
               key={index}
               label={unitName}
               onClick={() => handleUnitClick(unitName)}
-              color={unitName === selectedUnit ? 'primary' : 'default'}
+              color={unitName === unit ? 'primary' : 'default'}
               value={unitName}
-              maxwidth={50}
-              sx={{ textTransform: 'none' }}
+              sx={{ textTransform: 'none', maxWidth: 50 }}
             />
           ))}
         </Tabs>
@@ -102,63 +111,53 @@ function UnitSelector() {
     );
   }
 
-  // renderMultilineText = (lines) => (
-  //   <Box sx={{ lineHeight: 'small' }}>
-  //     {lines.map((line, index) => {
-  //       return (
-  //         <Typography variant="body1" key={index} component={'div'} marginLeft={2}>
-  //           {line}
-  //         </Typography>
-  //       );
-  //     })}
-  //     <br />
-  //   </Box>
-  // );
+  // if (isEmptyObject(sitesContext) || isEmptyObject(sitesContext.sites)) {
+  //   return;
+  // }
 
-  if (!sitesContext || !sitesContext.sites) {
-    return;
+  const deployed = isDeployed(unit);
+  let detected: boolean;
+  try {
+    detected = status[unit].detected;
+  } catch (e) {
+    detected = false;
   }
-  const unitName = sitesContext.selectedUnitName;
-  const unitStatus = statuses[unitName];
-  const isDeployed = sitesContext.selectedSite.deployed.includes(unitName);
 
   return (
     <Box>
       {renderUnitsList()}
       <Stack direction="column" divider={<Divider orientation="vertical" flexItem />} useFlexGap>
         <br />
-        {/*<Divider orientation="horizontal" />*/}
-        <Typography variant="h5">Status of &apos;{unitName}&apos;</Typography>
-        <br />
-        {isDeployed && unitStatus ? (
+        {!deployed ? (
+          <div>
+            <Notification message={`${unit} is not deployed yet!`} severity={'info'} />
+            <Typography align={'center'}>
+              Unit <b>{unit}</b> is not deployed yet!
+            </Typography>
+          </div>
+        ) : !detected ? (
+          <div>
+            <Notification message={`${unit} is deployed but does NOT respond to status requests!`} severity={'error'} />
+            <Typography align={'center'}>
+              Unit <b>{unit}</b> is deployed but does NOT respond to status requests!
+            </Typography>
+          </div>
+        ) : (
           <>
             <FormGroup row>
-              <FormControlLabel name="powered" control={<Checkbox checked={unitStatus.powered} />} label="Powered" />
-              <FormControlLabel name="detected" control={<Checkbox checked={unitStatus.detected} />} label="Detected" />
-              <FormControlLabel name="operational" control={<Checkbox checked={unitStatus.operational} />} label="Operational" />
-            </FormGroup>
-            <br />
-            <FormGroup>
-              {unitStatus.whyNotOperational && (
-                <Box>
-                  <Typography variant="h5">Why not Operational:</Typography>
-                  {this.renderMultilineText(unitStatus.whyNotOperational)}
-                </Box>
-              )}
-              <Typography variant="h5">Activities:</Typography>
-              <Typography variant="body1" marginLeft={2}>
-                {IntEnum[unitStatus.activities]}
+              <Typography sx={{ width: 100 }}></Typography>
+              <Typography variant="h5" sx={{ width: 80 }}>
+                Powered
               </Typography>
-              <br />
+              <Typography variant="h5" sx={{ width: 100 }}>
+                Detected
+              </Typography>
+              <Typography variant="h5" sx={{ width: 55 }}>
+                Oper
+              </Typography>
+              <Typography variant="h5">Activities</Typography>
             </FormGroup>
-            {/*<UnitComponent />*/}
           </>
-        ) : !isDeployed ? (
-          <Typography variant="h3">&apos;{unitName}&apos; is not deployed yet</Typography>
-        ) : (
-          <Typography sx={{ color: 'error.main' }} variant="h3">
-            &apos;{unitName}&apos; is deployed but does not respond to status requests!
-          </Typography>
         )}
       </Stack>
     </Box>
@@ -166,7 +165,6 @@ function UnitSelector() {
 }
 
 UnitSelector.propTypes = {
-  // selectedUnitName: PropTypes.string.isRequired,
   selectedUnitName: PropTypes.string,
   selectedSite: PropTypes.any,
   setSelectedSite: PropTypes.any,

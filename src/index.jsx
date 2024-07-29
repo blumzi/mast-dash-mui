@@ -38,7 +38,9 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(
   <ErrorBoundary>
-    <App />
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
   </ErrorBoundary>
 );
 

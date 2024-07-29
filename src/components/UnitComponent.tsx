@@ -1,54 +1,59 @@
-import { Button, FormLabel, TextField } from '@mui/material';
+import { Box, Button, Stack, TableCell, TableRow, TextField, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { controlApi, unitApi } from './Api';
-import Checkbox from '@mui/material/Checkbox';
-import Typography from '@mui/material/Typography';
-import FormControlLabel from '@mui/material/FormControlLabel';
+import { unitApi, controlApi } from './Api';
 import FormGroup from '@mui/material/FormGroup';
-import { useSitesContext } from 'contexts/SitesContext';
-import { isEmptyObject } from './Utils';
+import { useSitesContext, isDeployed } from 'contexts/SitesContext';
+import { mastComponentRender } from './MastComponent';
+import { isEmptyObject, renderMultilineText } from './Utils';
 
 export function UnitComponent() {
-  const sitesContext = useSitesContext();
+  // const sitesContext = useSitesContext();
+  const { selectedUnitName: unit, selectedSiteName: site, status, setStatus, deployedUnits } = useSitesContext();
   const [seconds, setSeconds] = useState(0);
-  const [status, setStatus] = useState(null);
 
-  // fetchUnitStatus();
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      fetchUnitStatus();
-    }, 30000);
+    fetchAllDeployedStatuses();
 
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [status]);
+    const intervalId = setInterval(fetchAllDeployedStatuses, 10000);
+    return () => clearInterval(intervalId);
+  }, [fetchAllDeployedStatuses, deployedUnits]);
 
-  function fetchUnitStatus() {
-    if (!sitesContext || !sitesContext.sites) {
-      return;
+  // if (!sitesContext) {
+  //   throw new Error('UnitComponent must be used within a SitesProvider');
+  // }
+
+  let unitStatus;
+  try {
+    unitStatus = status[unit];
+  } catch {
+    return;
+  }
+
+  function fetchAllDeployedStatuses() {
+    console.log(`deployedUnits: [${deployedUnits}]`);
+    for (const unitId in deployedUnits) {
+      fetchUnitStatus(deployedUnits[unitId]);
     }
+  }
 
-    // first get a mini status from the controller
-    controlApi(sitesContext.selectedSite.name, `unit/${sitesContext.selectedUnit}/minimal_status`)
-      .then((mini_status) => {
-        if (mini_status.powered && mini_status.detected) {
+  function fetchUnitStatus(uName) {
+    // first get a short status from the controller
+    controlApi(site, `unit/${uName}/minimal_status`)
+      .then((shortStatus) => {
+        if (shortStatus.detected) {
           // the unit is accessible, get the full status
-          unitApi(sitesContext.selectedUnit, 'status').then((full_status) => {
-            setStatus(full_status);
+          unitApi(uName, 'status').then((fullStatus) => {
+            setStatus((prevStatus) => ({ ...prevStatus, [uName]: fullStatus }));
           });
         } else {
           // keep the mini status
-          setStatus(mini_status);
+          shortStatus.type = 'short';
+          setStatus((prevStatus) => ({ ...prevStatus, [uName]: shortStatus }));
         }
       })
       .catch(() => {
-        setStatus(null);
+        setStatus((prevStatus) => ({ ...prevStatus, [uName]: { type: 'short', detected: false, powered: false } }));
       });
-  }
-
-  function isDeployed(unit_name) {
-    return sitesContext.selectedSite.deployed.includes(unit_name);
   }
 
   function handleSecondsChange(event) {
@@ -56,104 +61,121 @@ export function UnitComponent() {
   }
 
   function handleExpose() {
-    void unitApi(sitesContext.selectedUnit, 'expose', { seconds: seconds });
+    void unitApi(unit, 'expose', { seconds: seconds });
   }
 
-  function configs() {
+  function renderConfig() {
     return <>Nothing yet</>;
   }
 
-  function controls() {
-    if (isEmptyObject(sitesContext)) {
-      return;
-    }
-
-    const unit = sitesContext.selectedUnit;
+  function renderControls() {
+    const disabled = !isDeployed(unit);
 
     return (
       <>
         <FormGroup>
           <FormGroup row>
-            <Button
-              disabled={!isDeployed(unit)}
-              variant="text"
-              onClick={() => unitApi(unit, 'startup')}
-              sx={{ justifyContent: 'flex-start', width: '120px' }}
-            >
-              Startup
-            </Button>
-            <Button
-              disabled={!isDeployed(unit)}
-              variant="text"
-              onClick={() => unitApi(unit, 'shutdown')}
-              sx={{ justifyContent: 'flex-start', width: '120px' }}
-            >
-              Shutdown
-            </Button>
+            <Box display="flex" alignItems="baseline">
+              <Typography sx={{ width: '100px' }}>Guiding:</Typography>
+              <Button
+                disabled={disabled}
+                variant="text"
+                onClick={() => unitApi(unit, 'start_guiding')}
+                sx={{ justifyContent: 'flex-start' }}
+              >
+                Start
+              </Button>
+              <Button
+                disabled={disabled}
+                variant="text"
+                onClick={() => unitApi(unit, 'stop_guiding')}
+                sx={{ justifyContent: 'flex-start' }}
+              >
+                Stop
+              </Button>
+            </Box>
           </FormGroup>
           <FormGroup row>
-            <Button
-              disabled={!isDeployed(unit)}
-              variant="text"
-              onClick={() => unitApi(unit, 'start_autofocus')}
-              sx={{ justifyContent: 'flex-start', width: '120px' }}
-            >
-              Start autofocus
-            </Button>
-            <Button
-              disabled={!isDeployed(unit)}
-              variant="text"
-              onClick={() => unitApi(unit, 'stop_autofocus')}
-              sx={{ justifyContent: 'flex-start', width: '120px' }}
-            >
-              Stop autofocus
-            </Button>
+            <Box display="flex" alignItems="baseline">
+              <Typography sx={{ width: '100px' }}>Autofocus:</Typography>
+              <Button
+                disabled={disabled}
+                variant="text"
+                onClick={() => unitApi(unit, 'start_autofocus')}
+                sx={{ justifyContent: 'flex-start' }}
+              >
+                Start
+              </Button>
+              <Button
+                disabled={disabled}
+                variant="text"
+                onClick={() => unitApi(unit, 'stop_autofocus')}
+                sx={{ justifyContent: 'flex-start' }}
+              >
+                Stop
+              </Button>
+            </Box>
           </FormGroup>
           <FormGroup row>
-            <Button
-              disabled={!isDeployed(unit)}
-              variant="text"
-              onClick={handleExpose}
-              sx={{ justifyContent: 'flex-start', width: '120px' }}
-            >
-              Expose
-            </Button>
-            <TextField disabled={!isDeployed(unit)} label={'Seconds'} variant={'standard'} onChange={handleSecondsChange} value={seconds} />
+            <Typography sx={{ width: '100px' }}>&nbsp;</Typography>
+            <Box display="flex" alignItems="baseline">
+              <Button disabled={disabled} variant="text" onClick={handleExpose} sx={{ justifyContent: 'flex-start' }}>
+                Expose
+              </Button>
+              <TextField disabled={disabled} label={'Seconds'} variant={'standard'} onChange={handleSecondsChange} value={seconds} />
+            </Box>
           </FormGroup>
         </FormGroup>
       </>
     );
   }
 
-  function summary() {
-    if (isEmptyObject(sitesContext)) {
-      return;
-    }
-    const unit = sitesContext.selectedUnit;
-    // const isDeployed = isDeployed(unit);
+  function renderStatus() {
+    if (unitStatus === undefined || unitStatus.type == 'short') return;
 
-    if (!isDeployed(unit)) {
-      return <h6>Unit &apos;{unit}&apos; is not deployed yet!</h6>;
-    }
-    if (isEmptyObject(status)) {
-      return <h6>No status for {sitesContext.selectedUnit} yet!</h6>;
-    }
+    const operational = unitStatus.operational ? 'yes' : 'no';
+    const operationalColor = unitStatus.operational ? 'success' : 'error';
 
-    let activities = status.activities_verbal.replace('<UnitActivities.', '').replace(/:.*/, '');
-    if (activities === '0') {
-      activities = 'Idle';
-    }
+    const whyNotOperational = unitStatus.why_not_operational;
+
     return (
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <FormLabel sx={{ mr: 2, justifyContent: 'flex-start', width: '50px' }}>unit</FormLabel>
-        <FormControlLabel control={<Checkbox size="small" checked={status.powered} />} label="Powered" labelPlacement={'end'} />
-        <FormControlLabel control={<Checkbox size="small" checked={status.detected} />} label="Detected" labelPlacement={'end'} />
-        <Typography>
-          Activities: <b>{activities}</b>
-        </Typography>
-      </div>
+      <>
+        {/*<Box>*/}
+        {/*  <div style={{ display: 'flex', alignItems: 'left', textAlign: 'left' }}>*/}
+        {/*    <Stack>*/}
+        {/*      <FormGroup row>*/}
+        {/*        <Typography color="success" sx={{ width: '100px', textAlign: 'left' }}>*/}
+        <TableRow>
+          <TableCell sx={{ width: '10px' }}>Hiho</TableCell>
+          <TableCell sx={{ width: '50px' }}>Operational</TableCell>
+          {/*</Typography>*/}
+          {/*<Typography color={operationalColor} sx={{ width: '100px', textAlign: 'left' }}>*/}
+          <TableCell sx={{ width: '100px' }}>
+            <Typography color={operationalColor} sx={{ width: '100px', textAlign: 'left' }}>
+              {operational}
+            </Typography>
+          </TableCell>
+        </TableRow>
+        {/*  </Typography>*/}
+        {/*</FormGroup>*/}
+        {whyNotOperational && (
+          <FormGroup row>
+            <Typography color="success" sx={{ width: '100px', alignItems: 'left', textAlign: 'left' }}>
+              Why
+            </Typography>
+            <Typography color={operationalColor} sx={{ width: '300px', alignItems: 'left', textAlign: 'left' }}>
+              {renderMultilineText(whyNotOperational)}
+            </Typography>
+          </FormGroup>
+        )}
+        {/*    </Stack>*/}
+        {/*  </div>*/}
+        {/*</Box>*/}
+      </>
     );
   }
+
+  if (!isEmptyObject(unitStatus)) return mastComponentRender('unit', unit, renderStatus, renderControls, renderConfig);
 }
 
 export default UnitComponent;

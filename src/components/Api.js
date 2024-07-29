@@ -1,10 +1,17 @@
 import axios from 'axios';
 import { buildUnitUrl, buildControlUrl, buildSpecUrl } from './Utils';
+import { fetchConfiguredSites } from 'config';
 
 export async function unitApi(unitName, method, params) {
-  // if (!isDeployed(unitName)) {
+  // let deployedUnits = [];
+  // const sites = await fetchConfiguredSites();
+  // for (let siteId in sites) {
+  //   deployedUnits = [...deployedUnits, ...sites[siteId].deployed];
+  // }
+  // if (!deployedUnits.includes(unitName)) {
   //   return;
   // }
+
   return await getUrl(buildUnitUrl(unitName, method, params));
 }
 
