@@ -1,4 +1,13 @@
-import { Sites } from 'contexts/SitesContext';
+import SitesContext from 'contexts/SitesContext';
+
+export interface Site {
+  name: string;
+  deployed: string[];
+  planned: string[];
+  location: string;
+}
+
+export type Sites = Site[];
 
 export function fetchConfiguredSites() {
   let data;

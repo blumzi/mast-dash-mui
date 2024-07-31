@@ -7,6 +7,7 @@ import ThemeCustomization from 'themes';
 import ScrollTop from 'components/ScrollTop';
 import { Component } from 'react';
 import { SitesProvider } from 'contexts/SitesContext';
+import { UnitStatusProvider } from './contexts/UnitStatusContext';
 
 // ==============================|| APP - THEME, ROUTER, LOCAL ||============================== //
 // if (process.env.NODE_ENV === 'development') {
@@ -24,7 +25,9 @@ export default class App extends Component {
       <ThemeCustomization>
         <ScrollTop>
           <SitesProvider>
-            <RouterProvider router={router} />
+            <UnitStatusProvider>
+              <RouterProvider router={router} />
+            </UnitStatusProvider>
           </SitesProvider>
         </ScrollTop>
       </ThemeCustomization>

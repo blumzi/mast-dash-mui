@@ -16,7 +16,7 @@ export async function unitApi(unitName, method, params) {
 }
 
 export async function controlApi(site, method, params) {
-  return await getUrl(buildControlUrl(site, method, params));
+  return await getUrl(buildControlUrl(site.name, method, params));
 }
 
 export async function specApi(site, method, params) {

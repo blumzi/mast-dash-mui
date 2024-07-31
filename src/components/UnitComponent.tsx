@@ -1,67 +1,30 @@
-import { Box, Button, Stack, TableCell, TableRow, TextField, Typography } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import { unitApi, controlApi } from './Api';
+import { Box, TableCell, TableRow, TextField, Typography, Chip } from '@mui/material';
+import React, { useState } from 'react';
+import { unitApi } from './Api';
 import FormGroup from '@mui/material/FormGroup';
-import { useSitesContext, isDeployed } from 'contexts/SitesContext';
+import { useSitesContext, isDeployed } from '../contexts/SitesContext';
+import { useUnitStatusContext } from '../contexts/UnitStatusContext';
 import { mastComponentRender } from './MastComponent';
 import { isEmptyObject, renderMultilineText } from './Utils';
+import TableContainer from '@mui/material/TableContainer';
+import Paper from '@mui/material/Paper';
+import { Table, TableBody } from '@mui/material';
+import { MastRow } from './MastTable';
 
 export function UnitComponent() {
-  // const sitesContext = useSitesContext();
-  const { selectedUnitName: unit, selectedSiteName: site, status, setStatus, deployedUnits } = useSitesContext();
+  const { selectedUnit } = useSitesContext();
+  const { statuses } = useUnitStatusContext();
   const [seconds, setSeconds] = useState(0);
+  const unitStatus = statuses[selectedUnit];
 
-  useEffect(() => {
-    fetchAllDeployedStatuses();
-
-    const intervalId = setInterval(fetchAllDeployedStatuses, 10000);
-    return () => clearInterval(intervalId);
-  }, [fetchAllDeployedStatuses, deployedUnits]);
-
-  // if (!sitesContext) {
-  //   throw new Error('UnitComponent must be used within a SitesProvider');
-  // }
-
-  let unitStatus;
-  try {
-    unitStatus = status[unit];
-  } catch {
-    return;
-  }
-
-  function fetchAllDeployedStatuses() {
-    console.log(`deployedUnits: [${deployedUnits}]`);
-    for (const unitId in deployedUnits) {
-      fetchUnitStatus(deployedUnits[unitId]);
-    }
-  }
-
-  function fetchUnitStatus(uName) {
-    // first get a short status from the controller
-    controlApi(site, `unit/${uName}/minimal_status`)
-      .then((shortStatus) => {
-        if (shortStatus.detected) {
-          // the unit is accessible, get the full status
-          unitApi(uName, 'status').then((fullStatus) => {
-            setStatus((prevStatus) => ({ ...prevStatus, [uName]: fullStatus }));
-          });
-        } else {
-          // keep the mini status
-          shortStatus.type = 'short';
-          setStatus((prevStatus) => ({ ...prevStatus, [uName]: shortStatus }));
-        }
-      })
-      .catch(() => {
-        setStatus((prevStatus) => ({ ...prevStatus, [uName]: { type: 'short', detected: false, powered: false } }));
-      });
-  }
+  if (isEmptyObject(statuses[selectedUnit])) return;
 
   function handleSecondsChange(event) {
     setSeconds(parseFloat(event.target.value));
   }
 
   function handleExpose() {
-    void unitApi(unit, 'expose', { seconds: seconds });
+    void unitApi(selectedUnit, 'expose', { seconds: seconds });
   }
 
   function renderConfig() {
@@ -69,113 +32,113 @@ export function UnitComponent() {
   }
 
   function renderControls() {
-    const disabled = !isDeployed(unit);
+    const disabled = !isDeployed(selectedUnit);
 
     return (
       <>
-        <FormGroup>
-          <FormGroup row>
-            <Box display="flex" alignItems="baseline">
-              <Typography sx={{ width: '100px' }}>Guiding:</Typography>
-              <Button
-                disabled={disabled}
-                variant="text"
-                onClick={() => unitApi(unit, 'start_guiding')}
-                sx={{ justifyContent: 'flex-start' }}
-              >
-                Start
-              </Button>
-              <Button
-                disabled={disabled}
-                variant="text"
-                onClick={() => unitApi(unit, 'stop_guiding')}
-                sx={{ justifyContent: 'flex-start' }}
-              >
-                Stop
-              </Button>
-            </Box>
-          </FormGroup>
-          <FormGroup row>
-            <Box display="flex" alignItems="baseline">
-              <Typography sx={{ width: '100px' }}>Autofocus:</Typography>
-              <Button
-                disabled={disabled}
-                variant="text"
-                onClick={() => unitApi(unit, 'start_autofocus')}
-                sx={{ justifyContent: 'flex-start' }}
-              >
-                Start
-              </Button>
-              <Button
-                disabled={disabled}
-                variant="text"
-                onClick={() => unitApi(unit, 'stop_autofocus')}
-                sx={{ justifyContent: 'flex-start' }}
-              >
-                Stop
-              </Button>
-            </Box>
-          </FormGroup>
-          <FormGroup row>
-            <Typography sx={{ width: '100px' }}>&nbsp;</Typography>
-            <Box display="flex" alignItems="baseline">
-              <Button disabled={disabled} variant="text" onClick={handleExpose} sx={{ justifyContent: 'flex-start' }}>
-                Expose
-              </Button>
-              <TextField disabled={disabled} label={'Seconds'} variant={'standard'} onChange={handleSecondsChange} value={seconds} />
-            </Box>
-          </FormGroup>
-        </FormGroup>
+        <Paper sx={{ marginLeft: '1%', width: '50%', elevation: '0' }}>
+          <TableContainer>
+            <TableBody>
+              <MastRow>
+                <Typography>Guiding</Typography>
+                <Chip
+                  variant="outlined"
+                  disabled={disabled}
+                  size="small"
+                  onClick={() => unitApi(selectedUnit, 'start_guiding')}
+                  sx={{ justifyContent: 'flex-start' }}
+                  label="Start"
+                />
+                <Chip
+                  variant="outlined"
+                  disabled={disabled}
+                  size="small"
+                  onClick={() => unitApi(selectedUnit, 'stop_guiding')}
+                  sx={{ justifyContent: 'flex-start' }}
+                  label={'Stop'}
+                />
+                <Typography />
+              </MastRow>
+              <MastRow>
+                <Typography>Autofocus</Typography>
+                <Chip
+                  variant="outlined"
+                  disabled={disabled}
+                  size="small"
+                  onClick={() => unitApi(selectedUnit, 'start_autofocus')}
+                  sx={{ justifyContent: 'flex-start' }}
+                  label={'Start'}
+                />
+                <Chip
+                  variant="outlined"
+                  disabled={disabled}
+                  size="small"
+                  onClick={() => unitApi(selectedUnit, 'stop_autofocus')}
+                  sx={{ justifyContent: 'flex-start' }}
+                  label={'Stop'}
+                />
+                <Typography />
+              </MastRow>
+              <MastRow>
+                <Typography />
+                <Chip
+                  variant="outlined"
+                  disabled={disabled}
+                  size="small"
+                  onClick={handleExpose}
+                  sx={{ justifyContent: 'flex-start' }}
+                  label="Expose"
+                />
+                <TextField disabled={disabled} label={'Seconds'} variant={'standard'} onChange={handleSecondsChange} value={seconds} />
+                <Typography />
+              </MastRow>
+            </TableBody>
+          </TableContainer>
+        </Paper>
       </>
     );
   }
 
-  function renderStatus() {
-    if (unitStatus === undefined || unitStatus.type == 'short') return;
+  const operational = unitStatus.operational ? 'yes' : 'no';
+  const operationalColor = unitStatus.operational ? 'success' : 'error';
+  const whyNotOperational: string[] = unitStatus.why_not_operational;
 
-    const operational = unitStatus.operational ? 'yes' : 'no';
-    const operationalColor = unitStatus.operational ? 'success' : 'error';
+  if (!isEmptyObject(unitStatus)) return mastComponentRender('unit', selectedUnit, renderDetails);
 
-    const whyNotOperational = unitStatus.why_not_operational;
-
+  function renderDetails() {
     return (
-      <>
-        {/*<Box>*/}
-        {/*  <div style={{ display: 'flex', alignItems: 'left', textAlign: 'left' }}>*/}
-        {/*    <Stack>*/}
-        {/*      <FormGroup row>*/}
-        {/*        <Typography color="success" sx={{ width: '100px', textAlign: 'left' }}>*/}
-        <TableRow>
-          <TableCell sx={{ width: '10px' }}>Hiho</TableCell>
-          <TableCell sx={{ width: '50px' }}>Operational</TableCell>
-          {/*</Typography>*/}
-          {/*<Typography color={operationalColor} sx={{ width: '100px', textAlign: 'left' }}>*/}
-          <TableCell sx={{ width: '100px' }}>
-            <Typography color={operationalColor} sx={{ width: '100px', textAlign: 'left' }}>
-              {operational}
-            </Typography>
-          </TableCell>
-        </TableRow>
-        {/*  </Typography>*/}
-        {/*</FormGroup>*/}
-        {whyNotOperational && (
-          <FormGroup row>
-            <Typography color="success" sx={{ width: '100px', alignItems: 'left', textAlign: 'left' }}>
-              Why
-            </Typography>
-            <Typography color={operationalColor} sx={{ width: '300px', alignItems: 'left', textAlign: 'left' }}>
-              {renderMultilineText(whyNotOperational)}
-            </Typography>
-          </FormGroup>
-        )}
-        {/*    </Stack>*/}
-        {/*  </div>*/}
-        {/*</Box>*/}
-      </>
+      <div>
+        <Typography variant="h5">Status</Typography>
+        <Paper sx={{ marginLeft: '1%', width: '50%', elevation: '0' }}>
+          <TableContainer component={Paper}>
+            <Table size="small" aria-label="a dense table" sx={{ border: 'none' }}>
+              <TableBody>
+                <MastRow>
+                  <Typography>Operational</Typography>
+                  <Typography color={operationalColor}>{operational}</Typography>
+                  <Typography />
+                  <Typography />
+                </MastRow>
+                <MastRow>
+                  <Typography>Why</Typography>
+                  <div>
+                    {whyNotOperational.map((line) => (
+                      <Typography color={operationalColor}>{line}</Typography>
+                    ))}
+                  </div>
+                  <Typography />
+                  <Typography />
+                </MastRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+        <br />
+        <Typography variant="h5">Controls</Typography>
+        {renderControls()}
+      </div>
     );
   }
-
-  if (!isEmptyObject(unitStatus)) return mastComponentRender('unit', unit, renderStatus, renderControls, renderConfig);
 }
 
 export default UnitComponent;

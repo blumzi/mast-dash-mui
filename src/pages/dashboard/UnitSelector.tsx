@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Box, Typography, Divider, Stack } from '@mui/material';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import { unitApi } from '../../components/Api';
 import * as PropTypes from 'prop-types';
 import { useSitesContext, isDeployed } from '../../contexts/SitesContext';
 import FormGroup from '@mui/material/FormGroup';
 import { Notification } from '../../components/Notification';
 import { isEmptyObject } from '../../components/Utils';
+import { useUnitStatusContext } from '../../contexts/UnitStatusContext';
 
 const IntEnum = {
   0: 'Idle',
@@ -16,74 +16,57 @@ const IntEnum = {
 };
 
 export function UnitSelector() {
-  const sitesContext = useSitesContext();
-  if (!sitesContext) {
-    throw new Error('UnitSelector must be used within a SitesProvider');
-  }
-  if (isEmptyObject(sitesContext)) return;
+  const { sites, selectedSite, setSelectedSite, selectedUnit, setSelectedUnit } = useSitesContext();
+  const { statuses } = useUnitStatusContext();
+  const deployed = isDeployed(selectedUnit);
 
-  const {
-    selectedUnitName: unit,
-    sites,
-    status,
-    selectedSite,
-    setSelectedSiteName,
-    setSelectedSite,
-    setSelectedUnitName,
-    setStatus
-  } = sitesContext;
-
-  function handleSiteChange(event, newSite) {
-    setSelectedSiteName(newSite);
-
-    sites.forEach((site) => {
-      if (site.name === newSite) {
-        const unitNames = [...site.deployed, ...site.planned];
-        setSelectedUnitName(unitNames[0]);
-        setSelectedSite(site);
+  function handleSiteChange(event, newSiteName) {
+    for (let i = 0; i < sites.length; i++) {
+      if (sites[i].name === newSiteName) {
+        const units = [...sites[i].deployed, ...sites[i].planned];
+        setSelectedUnit(units[0]);
+        setSelectedSite(sites[i]);
+        return;
       }
-    });
+    }
   }
 
   function handleUnitChange(event, newValue: string) {
-    setSelectedUnitName(newValue);
+    setSelectedUnit(newValue);
   }
 
   function handleUnitClick(unit: string) {
-    setSelectedUnitName(unit);
-    unitApi(unit, 'status').then((status) => {
-      setStatus((prevStatuses) => ({ ...prevStatuses, [unit]: status }));
-    });
+    setSelectedUnit(unit);
+    // unitApi(unit, 'status').then((status) => {
+    //   setStatus((prevStatuses) => ({ ...prevStatuses, [unit]: status }));
+    // });
   }
 
   function handleSiteClick(siteName: string) {
-    setSelectedSiteName(siteName);
-    sites.forEach((site) => {
-      if (site.name === siteName) {
-        const unitNames = [...site.deployed, ...site.planned];
-        setSelectedUnitName(unitNames[0]);
-        setSelectedSite(site);
+    for (let i = 0; i < sites.length; i++) {
+      if (sites[i].name === siteName) {
+        const unitNames = [...sites[i].deployed, ...sites[i].planned];
+        setSelectedUnit(unitNames[0]);
+        setSelectedSite(sites[i]);
+        return;
       }
-    });
+    }
+
     renderUnitsList();
   }
 
   function renderUnitsList() {
-    if (!sitesContext || isEmptyObject(sitesContext.sites)) {
+    if (isEmptyObject(sites) || isEmptyObject(selectedSite)) {
       return null;
     }
 
-    if (!sites) {
-      return;
-    }
-
-    const units: any[] = [...selectedSite.deployed, ...selectedSite.planned];
+    const units: string[] = [...selectedSite.deployed, ...selectedSite.planned];
 
     return (
       <Box sx={{ width: '100%' }}>
         <Typography variant="h5">Sites</Typography>
         <Tabs sx={{ '& button': { borderRadius: 2 } }} onChange={handleSiteChange} value={selectedSite.location}>
-          {sites.map((site, index) => (
+          {sites.map((site) => (
             <Tab
               key={site.name}
               label={site.location}
@@ -95,13 +78,13 @@ export function UnitSelector() {
         </Tabs>
         <br />
         <Typography variant="h5">Units at {selectedSite.location}</Typography>
-        <Tabs onChange={handleUnitChange} value={unit} variant="scrollable" scrollButtons="auto">
+        <Tabs onChange={handleUnitChange} value={selectedUnit} variant="scrollable" scrollButtons="auto">
           {units.map((unitName, index) => (
             <Tab
               key={index}
               label={unitName}
               onClick={() => handleUnitClick(unitName)}
-              color={unitName === unit ? 'primary' : 'default'}
+              color={unitName === selectedUnit ? 'primary' : 'default'}
               value={unitName}
               sx={{ textTransform: 'none', maxWidth: 50 }}
             />
@@ -111,16 +94,43 @@ export function UnitSelector() {
     );
   }
 
-  // if (isEmptyObject(sitesContext) || isEmptyObject(sitesContext.sites)) {
-  //   return;
-  // }
+  if (isEmptyObject(selectedUnit) || isEmptyObject(statuses[selectedUnit])) return;
 
-  const deployed = isDeployed(unit);
   let detected: boolean;
-  try {
-    detected = status[unit].detected;
-  } catch (e) {
+  let powered: boolean;
+
+  if (deployed) {
+    try {
+      detected = statuses[selectedUnit ?? 0].detected;
+    } catch (e) {
+      detected = false;
+    }
+  } else {
     detected = false;
+  }
+
+  if (deployed) {
+    try {
+      powered = statuses[selectedUnit ?? 0].powered;
+    } catch (e) {
+      powered = false;
+    }
+  } else {
+    powered = false;
+  }
+
+  let message = '';
+
+  if (!deployed) {
+    message = `Unit ${selectedUnit} is not deployed yet!`;
+  } else {
+    if (!powered) {
+      message = `Unit ${selectedUnit} is deployed but not powered`;
+    } else {
+      if (!detected) {
+        message = `Unit ${selectedUnit} is deployed and powered but not detected`;
+      }
+    }
   }
 
   return (
@@ -128,19 +138,10 @@ export function UnitSelector() {
       {renderUnitsList()}
       <Stack direction="column" divider={<Divider orientation="vertical" flexItem />} useFlexGap>
         <br />
-        {!deployed ? (
+        {message !== '' ? (
           <div>
-            <Notification message={`${unit} is not deployed yet!`} severity={'info'} />
-            <Typography align={'center'}>
-              Unit <b>{unit}</b> is not deployed yet!
-            </Typography>
-          </div>
-        ) : !detected ? (
-          <div>
-            <Notification message={`${unit} is deployed but does NOT respond to status requests!`} severity={'error'} />
-            <Typography align={'center'}>
-              Unit <b>{unit}</b> is deployed but does NOT respond to status requests!
-            </Typography>
+            <Notification message={message} severity={'info'} />
+            <Typography align={'center'}>{message}</Typography>
           </div>
         ) : (
           <>
