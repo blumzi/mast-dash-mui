@@ -1,5 +1,6 @@
 // assets
 import { DashboardOutlined } from '@ant-design/icons';
+import Clocks from '../components/Clocks';
 
 // icons
 const icons = {

@@ -4,17 +4,17 @@ import { useSitesContext } from './SitesContext';
 import { unitApi, controlApi } from '../components/Api';
 
 type UnitStatusContextType = {
-  statuses: { [unitName: string]: any };
-  setUnitStatus: (unitName: string, status: any) => void;
+  statuses: { [unitName: string]: never };
+  setUnitStatus: (unitName: string, status: never) => void;
 };
 
 const UnitStatusContext = createContext<UnitStatusContextType | undefined>(undefined);
 
 export const UnitStatusProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [statuses, setStatuses] = useState<{ [unitName: string]: any }>({});
+  const [statuses, setStatuses] = useState<{ [unitName: string]: never }>({});
   const { selectedSite } = useSitesContext();
 
-  const setUnitStatus = (unitName: string, stat) => {
+  const setUnitStatus = (unitName: string, stat: never) => {
     setStatuses((prevStatuses) => ({
       ...prevStatuses,
       [unitName]: stat
@@ -55,8 +55,6 @@ export const UnitStatusProvider: React.FC<{ children: ReactNode }> = ({ children
       });
   }
 
-  // }, [selectedSite]);
-
   const value = useMemo(
     () => ({
       statuses,
@@ -75,5 +73,3 @@ export const useUnitStatusContext = () => {
   }
   return context;
 };
-
-// export default UnitStatusContext;

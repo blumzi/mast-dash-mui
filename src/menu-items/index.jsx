@@ -5,8 +5,7 @@ import components from './components';
 import safety from './safety';
 import tasks from './tasks';
 import utilities from './utilities';
-// import support from './support';
-// import UnitSelector from 'pages/dashboard/UnitSelector';
+import Clocks from '../components/Clocks';
 
 // ==============================|| MENU ITEMS ||============================== //
 

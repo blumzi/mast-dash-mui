@@ -8,6 +8,7 @@ import FormGroup from '@mui/material/FormGroup';
 import { Notification } from '../../components/Notification';
 import { isEmptyObject } from '../../components/Utils';
 import { useUnitStatusContext } from '../../contexts/UnitStatusContext';
+import { PowerSwitchComponent } from '../../components/PowerSwitchComponent';
 
 const IntEnum = {
   0: 'Idle',
@@ -20,9 +21,9 @@ export function UnitSelector() {
   const { statuses } = useUnitStatusContext();
   const deployed = isDeployed(selectedUnit);
 
-  function handleSiteChange(event, newSiteName) {
+  function handleSiteChange(event: React.ChangeEvent<HTMLInputElement>, newSiteLocation: string) {
     for (let i = 0; i < sites.length; i++) {
-      if (sites[i].name === newSiteName) {
+      if (sites[i].location === newSiteLocation) {
         const units = [...sites[i].deployed, ...sites[i].planned];
         setSelectedUnit(units[0]);
         setSelectedSite(sites[i]);
@@ -42,7 +43,7 @@ export function UnitSelector() {
     // });
   }
 
-  function handleSiteClick(siteName: string) {
+  function handleSiteClick(event, siteName: string) {
     for (let i = 0; i < sites.length; i++) {
       if (sites[i].name === siteName) {
         const unitNames = [...sites[i].deployed, ...sites[i].planned];
@@ -70,7 +71,7 @@ export function UnitSelector() {
             <Tab
               key={site.name}
               label={site.location}
-              onClick={() => handleSiteClick(site.name)}
+              onClick={handleSiteClick}
               color={site.name === selectedSite.name ? 'primary' : 'default'}
               value={site.location}
             />
@@ -134,34 +135,39 @@ export function UnitSelector() {
   }
 
   return (
-    <Box>
-      {renderUnitsList()}
-      <Stack direction="column" divider={<Divider orientation="vertical" flexItem />} useFlexGap>
-        <br />
-        {message !== '' ? (
-          <div>
-            <Notification message={message} severity={'info'} />
-            <Typography align={'center'}>{message}</Typography>
-          </div>
-        ) : (
-          <>
-            <FormGroup row>
-              <Typography sx={{ width: 100 }}></Typography>
-              <Typography variant="h5" sx={{ width: 80 }}>
-                Powered
-              </Typography>
-              <Typography variant="h5" sx={{ width: 100 }}>
-                Detected
-              </Typography>
-              <Typography variant="h5" sx={{ width: 55 }}>
-                Oper
-              </Typography>
-              <Typography variant="h5">Activities</Typography>
-            </FormGroup>
-          </>
-        )}
-      </Stack>
-    </Box>
+    <>
+      <Box>
+        {renderUnitsList()}
+        <PowerSwitchComponent />
+        <Stack direction="column" divider={<Divider orientation="vertical" flexItem />} useFlexGap>
+          <br />
+          {message !== '' ? (
+            <div>
+              <Notification message={message} severity={'info'} />
+              <Typography align={'center'}>{message}</Typography>
+            </div>
+          ) : (
+            <>
+              <FormGroup row>
+                <Typography variant="h5" sx={{ width: 100 }}>
+                  Comp.
+                </Typography>
+                <Typography variant="h5" sx={{ width: 80 }}>
+                  Powered
+                </Typography>
+                <Typography variant="h5" sx={{ width: 100 }}>
+                  Detected
+                </Typography>
+                <Typography variant="h5" sx={{ width: 55 }}>
+                  Oper.
+                </Typography>
+                <Typography variant="h5">Activities</Typography>
+              </FormGroup>
+            </>
+          )}
+        </Stack>
+      </Box>
+    </>
   );
 }
 

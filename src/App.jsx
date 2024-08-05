@@ -8,6 +8,7 @@ import ScrollTop from 'components/ScrollTop';
 import { Component } from 'react';
 import { SitesProvider } from 'contexts/SitesContext';
 import { UnitStatusProvider } from './contexts/UnitStatusContext';
+import { UnitConfigProvider } from './contexts/UnitConfigContext';
 
 // ==============================|| APP - THEME, ROUTER, LOCAL ||============================== //
 // if (process.env.NODE_ENV === 'development') {
@@ -26,7 +27,9 @@ export default class App extends Component {
         <ScrollTop>
           <SitesProvider>
             <UnitStatusProvider>
-              <RouterProvider router={router} />
+              <UnitConfigProvider>
+                <RouterProvider router={router} />
+              </UnitConfigProvider>
             </UnitStatusProvider>
           </SitesProvider>
         </ScrollTop>

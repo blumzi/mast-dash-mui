@@ -136,43 +136,4 @@ export function mastComponentRender(componentType: string, unitName: string, ren
   );
 }
 
-export function mastComponentRenderGlobalControls(componentType: string, unitName: string) {
-  const component = componentType == 'unit' ? '' : componentType + '/';
-
-  return (
-    <>
-      <Box>
-        <FormGroup row>
-          <Button
-            variant="text"
-            // disabled={disabled}
-            size="small"
-            onClick={() => unitApi(unitName, `${component}startup`)}
-            sx={{ justifyContent: 'flex-start', width: '100px' }}
-          >
-            Startup
-          </Button>
-          <Button
-            variant="text"
-            // disabled={disabled}
-            size="small"
-            onClick={() => unitApi(unitName, '${component}shutdown')}
-            sx={{ justifyContent: 'flex-start', width: '100px' }}
-          >
-            Shutdown
-          </Button>
-          <Button
-            variant="text"
-            // disabled={disabled}
-            size="small"
-            onClick={() => unitApi(unitName, '${component}abort')}
-            sx={{ justifyContent: 'flex-start', width: '100px' }}
-          >
-            Abort
-          </Button>
-        </FormGroup>
-      </Box>
-    </>
-  );
-}
 export default mastComponentRender;

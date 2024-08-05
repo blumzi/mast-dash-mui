@@ -9,6 +9,7 @@ import Search from './Search';
 import Profile from './Profile';
 import Notification from './Notification';
 import MobileSection from './MobileSection';
+import Clocks from '../../../../components/Clocks';
 
 // project import
 import { GithubOutlined } from '@ant-design/icons';
@@ -20,6 +21,7 @@ export default function HeaderContent() {
 
   return (
     <>
+      <Clocks />
       {!downLG && <Search />}
       {downLG && <Box sx={{ width: '100%', ml: 1 }} />}
       <IconButton

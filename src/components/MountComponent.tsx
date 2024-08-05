@@ -5,26 +5,32 @@ import { unitApi } from './Api';
 import Typography from '@mui/material/Typography';
 import FormGroup from '@mui/material/FormGroup';
 import { isEmptyObject, parseCoordinates } from './Utils';
-import { useSitesContext } from 'contexts/SitesContext';
+import { useSitesContext } from '../contexts/SitesContext';
+import { useUnitConfigContext } from '../contexts/UnitConfigContext';
 import { renderMultilineText } from './Utils';
+import { useUnitStatusContext } from '../contexts/UnitStatusContext';
 
 export function MountComponent() {
-  const sitesContext = useSitesContext();
+  const { selectedUnit, selectedSite } = useSitesContext();
+  const { statuses } = useUnitStatusContext();
+  const { configs } = useUnitConfigContext();
+
   const [ra, setRa] = useState(0);
   const [dec, setDec] = useState(0);
-  if (!sitesContext) {
-    throw new Error('MountComponent must be used within a SitesProvider');
-  }
-  const { selectedUnitName: unit, status } = sitesContext;
 
-  let unitStatus;
-  let mountStatus;
-  try {
-    unitStatus = status[unit];
-    mountStatus = unitStatus.mount;
-  } catch {
-    return;
-  }
+  const unitStatus = statuses[selectedUnit];
+  const unitConfig: never = configs[selectedUnit];
+
+  const mountStatus = unitStatus.mount;
+
+  // let unitStatus;
+  // let mountStatus;
+  // try {
+  //   unitStatus = status[unit];
+  //   mountStatus = unitStatus.mount;
+  // } catch {
+  //   return;
+  // }
 
   function handleRaChange(event) {
     setRa(event.target.value);
@@ -37,7 +43,7 @@ export function MountComponent() {
   function handleMoveToCoordinates() {
     const raNumeric = parseCoordinates(ra);
     const decNumeric = parseCoordinates(dec);
-    void unitApi(unit, 'mount/move_to_coordinates', { ra: raNumeric, dec: decNumeric });
+    void unitApi(selectedUnit, 'mount/move_to_coordinates', { ra: raNumeric, dec: decNumeric });
   }
 
   function renderConfig() {
@@ -45,9 +51,6 @@ export function MountComponent() {
   }
 
   function renderControls() {
-    if (isEmptyObject(sitesContext)) {
-      return;
-    }
     const disabled = false;
 
     return (
@@ -60,7 +63,7 @@ export function MountComponent() {
               variant="text"
               disabled={disabled}
               size="small"
-              onClick={() => unitApi(unit, 'mount/start_tracking')}
+              onClick={() => unitApi(selectedUnit, 'mount/start_tracking')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
               Start
@@ -69,7 +72,7 @@ export function MountComponent() {
               variant="text"
               disabled={disabled}
               size="small"
-              onClick={() => unitApi(unit, 'mount/stop_tracking')}
+              onClick={() => unitApi(selectedUnit, 'mount/stop_tracking')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
               Stop
@@ -81,7 +84,7 @@ export function MountComponent() {
               variant="text"
               disabled={disabled}
               size="small"
-              onClick={() => unitApi(unit, 'mount/park')}
+              onClick={() => unitApi(selectedUnit, 'mount/park')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
               Park
@@ -90,7 +93,7 @@ export function MountComponent() {
               variant="text"
               disabled={disabled}
               size="small"
-              onClick={() => unitApi(unit, 'mount/find_home')}
+              onClick={() => unitApi(selectedUnit, 'mount/find_home')}
               sx={{ justifyContent: 'flex-start', width: '100px' }}
             >
               Find home
@@ -115,6 +118,8 @@ export function MountComponent() {
     );
   }
 
+  function renderDetails() {}
+
   function renderStatus() {
     const operational = mountStatus.operational ? 'yes' : 'no';
     const operationalColor = mountStatus.operational ? 'success' : 'error';
@@ -127,7 +132,7 @@ export function MountComponent() {
           <div style={{ display: 'flex', alignItems: 'left', textAlign: 'left' }}>
             <Stack>
               <FormGroup row>
-                {/* eslint-disable-next-line react/jsx-no-undef */}
+                {}
                 <Typography color="success" sx={{ width: '100px', textAlign: 'left' }}>
                   Operational
                 </Typography>
@@ -152,7 +157,7 @@ export function MountComponent() {
     );
   }
 
-  return mastComponentRender('mount', unit, renderStatus, renderControls, renderConfig);
+  return mastComponentRender('mount', selectedUnit, renderStatus, renderControls, renderConfig);
 }
 
 export default MountComponent;
